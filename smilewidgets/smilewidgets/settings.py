@@ -25,7 +25,7 @@ SECRET_KEY = 'sb081^i892i)6eo=6f98-(e#pn5yzc=!b_mk_e^kb^-$2#bhrx'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -76,12 +76,12 @@ WSGI_APPLICATION = 'smilewidgets.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('POSTGRES_DB', 'postgres'),
-        'USER': os.getenv('POSTGRES_USER', 'postgres'),
-        'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'postgres'),
-        'HOST': 'db',
-        'PORT': 5432  # default postgres port
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'smilewidgets',
+        'USER': 'root',
+        'PASSWORD': '1',
+        'HOST': 'localhost',
+        'PORT': 3306  # default postgres port
     }
 }
 

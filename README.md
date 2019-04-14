@@ -41,3 +41,15 @@ The Smile Widget Company currently sells two types of smile widgets: a Big Widge
 ### Additional Information
 * Please use Django Rest Framework or a Python web framework of your choice to create the endpoint.
 * Just as a general guideline, we've designed this exercise to take less than 4 hours.
+
+### Update
+* Run 'pip install -r requirements.txt'
+* Create a mysql database called as smilewidgets with the command 'create database smilewidgets;'
+* Run 'python smilewidgets/manage.py makemigrations'
+* Run 'bash startup-script.sh'
+* Login to Database (Here Im using Mysql) and Run the below insert queries:
+  * insert into products_productprice (amount, date_start, date_end, product_id_id) values (80000, "2018-11-23", "2018-11-25", 1);
+  * insert into products_productprice (amount, date_start, date_end, product_id_id) values (00, "2018-11-23", "2018-11-25", 2);
+  * insert into products_productprice (amount, date_start, product_id_id) values (120000, "2019-01-01", 1);
+  * insert into products_productprice (amount, date_start, product_id_id) values (12500, "2019-01-01", 2); 
+* Now you can go to '0.0.0.0:8000' and check the functionality
