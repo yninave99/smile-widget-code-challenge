@@ -4,82 +4,106 @@ from django.shortcuts import render
 from products.models import Product, GiftCard, ProductPrice
 import datetime
 
-
-def index(request):
-    """
-        Render Homepage
-    """
-    return render(request, 'index.html', {"title": "home"})
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 
 
+@api_view()
 def get_product_price(request):
     """
         Fetches the Product Amount including Name and Product Code
+        @@ ---------------------------------------------------
+            Input : Rest Request with productid, date and giftcode
+            Type : Get
+            Output : 
+                Onsuccess : 1) Message : Success
+                            2) Data : List of Product Price
+                Onerror   : 1) Message : Failed
+                            2) Data : Empty List
     """
-    productId = None if request.GET['productid'] == 'All' else request.GET['productid']
+    product_id = None if request.GET['productid'].lower() == 'all' else request.GET['productid']
     date = request.GET['date']
 
     try:
         # Get Product amount w.r.t prod_id and date
-        productListWithAmount = get_product_amount(date, productId)
+        product_list = get_product_amount(date, product_id)
 
-        giftcode = request.GET['giftcode']
-        for product in productListWithAmount:
-            if not giftcode == "All":
-                discountAmt = getDiscountAmount(giftcode, date)
-                product['amount'] = product['amount'] - discountAmt
+        gift_code = request.GET['giftcode']
+        for product in product_list:
+            if not gift_code.lower() == "all":
+                discount_amt = get_discount_amount(gift_code, date)
+                product['amount'] = product['amount'] - discount_amt
                 product['amount'] = product['amount'] if product['amount'] > 0 else 0
-        return JsonResponse(productListWithAmount, safe=False)
+        return Response({'message' : "success", "data": product_list})
     except Exception as e:
-        return(JsonResponse("Error Occured", safe=False))
+        return Response({'message' : "Failed", "data":[]})
 
-
+@api_view()
 def get_product_code(request):
     """
         Fetches the Product Code
+        @@ ---------------------------------------------------
+            Input : Rest Request
+            Type : Get
+            Output : 
+                Onsuccess : 1) Message : Success
+                            2) Data : List of Products
+                Onerror   : 1) Message : Failed
+                            2) Data : Empty List
     """
     try:
         products = Product.objects.all().values()
         products_list = list(products)
-        return JsonResponse(products_list, safe=False)
+        return Response({'message' : "success", "data":products_list})
     except Exception as e:
-        return(JsonResponse("Error Occured", safe=False))
+        return Response({'message' : "Failed", "data":[]})
 
 
-
+@api_view()
 def get_gift_code(request):
     """
         Fetches the Gift Card Code
+        @@ ---------------------------------------------------
+            Input : Rest Request
+            Type : Get
+            Output : 
+                Onsuccess : 1) Message : Success
+                            2) Data : List of Gift Codes
+                Onerror   : 1) Message : Failed
+                            2) Data : Empty List
     """
     try:
         gift_card = GiftCard.objects.all().values()
         gift_list = list(gift_card)
-        return JsonResponse(gift_list, safe=False)
+        return Response({'message' : "success", "data":gift_list})
     except Exception as e:
-        return(JsonResponse("Error Occured", safe=False))
+        return Response({'message' : "Failed", "data":[]})
 
 
-def createProductList(productQueryObj):
+def create_product_list(productQueryObj):
     """
         Create Final Product list to be send to Frontend
     """
     try:
-        productListWithAmount = []
+        product_list = []
         for product in productQueryObj:
-            tempDict = {}
+            temp_dict = {}
             if 'amount' in product:
-                tempDict['amount'] = product['amount']
-                tempDict['id'] = product['product_id_id']
-                tempDict['product_name'] = Product.objects.get(id=product['product_id_id']).name
-                tempDict['product_code'] = Product.objects.get(id=product['product_id_id']).code
+                product_obj = Product.objects.get(id=product['product_id_id'])
+                temp_dict['amount'] = product['amount']
+                temp_dict['id'] = product['product_id_id']
+                temp_dict['product_name'] = product_obj.name
+                temp_dict['product_code'] = product_obj.code
+                temp_dict['price_schedule'] = product['price_schedule']
             else:
-                tempDict['amount'] = product['price']
-                tempDict['id'] = product['id']
-                tempDict['product_name'] = product['name']
-                tempDict['product_code'] = product['code']
+                temp_dict['amount'] = product['price']
+                temp_dict['id'] = product['id']
+                temp_dict['product_name'] = product['name']
+                temp_dict['product_code'] = product['code']
+                temp_dict['price_schedule'] = None
 
-            productListWithAmount.append(tempDict)
-        return productListWithAmount
+            product_list.append(temp_dict)
+        return product_list
     except Exception as e:
         return False
 
@@ -91,52 +115,59 @@ def get_product_amount(date, productId=None):
     try:
         date_time_obj = datetime.datetime.strptime(date, '%Y-%m-%d').date()
         if productId is not None:
-            productQueryObj = ProductPrice.objects.filter(product_id=productId, date_start__lte=date_time_obj).values()
-            productQuery = []
-            for element in productQueryObj:
-                if element['date_end'] is not None:
-                    if element['date_start'] <= date_time_obj and element['date_end'] >= date_time_obj:
-                        productQuery.append(element)
+            product_query_obj = ProductPrice.objects.filter(product_id=productId, date_start__lte=date_time_obj).values()
+            product_list = []
+            for product in product_query_obj:
+                if product['date_end'] is not None:
+                    if product['date_start'] <= date_time_obj and product['date_end'] >= date_time_obj:
+                        product_list.append(product)
                 else:
-                    if element['date_start'] <= date_time_obj:
-                        productQuery.append(element)
+                    if product['date_start'] <= date_time_obj:
+                        product_list.append(product)
 
-            if not len(productQuery):
-                productQuery = Product.objects.filter(id=productId).values()
+            if not len(product_list):
+                product_list = Product.objects.filter(id=productId).values()
         else:
-            productQueryObj = ProductPrice.objects.filter(date_start__lte=date_time_obj).values()
-            productQuery = []
-            for element in productQueryObj:
-                if element['date_end'] is not None:
-                    if element['date_start'] <= date_time_obj and element['date_end'] >= date_time_obj:
-                        productQuery.append(element)
+            product_query_obj = ProductPrice.objects.filter(date_start__lte=date_time_obj).values()
+            product_list = []
+            for product in product_query_obj:
+                if product['date_end'] is not None:
+                    if product['date_start'] <= date_time_obj and product['date_end'] >= date_time_obj:
+                        product_list.append(product)
                 else:
-                    if element['date_start'] <= date_time_obj:
-                        productQuery.append(element)
+                    if product['date_start'] <= date_time_obj:
+                        product_list.append(product)
 
-            if not len(productQuery):
-                productQuery = Product.objects.filter().values()
-        return createProductList(productQuery)
+            if not len(product_list):
+                product_list = Product.objects.filter().values()
+
+        return create_product_list(product_list)
+
     except Exception as e:
+
         return False
 
 
-def getDiscountAmount(giftCardCode, date):
+def get_discount_amount(giftCardCode, date):
     """
         Fetches the Discount Amount for user based on its gift card validity
     """
     try:
-        discountAmt = 0
+        discount_amt = 0
         date_time_obj = datetime.datetime.strptime(date, '%Y-%m-%d').date()
-        giftCardObj = GiftCard.objects.filter(id=giftCardCode, date_start__lte=date_time_obj).values()
-        if len(giftCardObj):
-            giftCardObj = giftCardObj[0]
-            if giftCardObj['date_end'] is not None:
-                if giftCardObj['date_start'] <= date_time_obj and giftCardObj['date_end'] >= date_time_obj:
-                    discountAmt = giftCardObj['amount']
+        gift_card_obj = GiftCard.objects.filter(id=giftCardCode, date_start__lte=date_time_obj).values()
+
+        if len(gift_card_obj):
+            gift_card_obj = gift_card_obj[0]
+            if gift_card_obj['date_end'] is not None:
+                if gift_card_obj['date_start'] <= date_time_obj and gift_card_obj['date_end'] >= date_time_obj:
+                    discount_amt = gift_card_obj['amount']
             else:
-                if giftCardObj['date_start'] <= date_time_obj:
-                    discountAmt = giftCardObj['amount']
-        return(discountAmt)
+                if gift_card_obj['date_start'] <= date_time_obj:
+                    discount_amt = gift_card_obj['amount']
+
+        return(discount_amt)
+
     except Exception as e:
+        
         return False

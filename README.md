@@ -45,11 +45,11 @@ The Smile Widget Company currently sells two types of smile widgets: a Big Widge
 ### Update
 * Run 'pip install -r requirements.txt'
 * Create a mysql database called as smilewidgets with the command 'create database smilewidgets;'
-* Run 'python smilewidgets/manage.py makemigrations'
 * Run 'bash startup-script.sh'
-* Login to Database (Here Im using Mysql) and Run the below insert queries:
-  * insert into products_productprice (amount, date_start, date_end, product_id_id) values (80000, "2018-11-23", "2018-11-25", 1);
-  * insert into products_productprice (amount, date_start, date_end, product_id_id) values (00, "2018-11-23", "2018-11-25", 2);
-  * insert into products_productprice (amount, date_start, product_id_id) values (120000, "2019-01-01", 1);
-  * insert into products_productprice (amount, date_start, product_id_id) values (12500, "2019-01-01", 2); 
-* Now you can go to '0.0.0.0:8000' and check the functionality
+* Now you can go to 'http://0.0.0.0:8000/api/get-price?productid=1&date=2018-11-21&giftcode=all' and check the functionality
+ * Input : 
+  * productid=1
+  * date=2018-11-21
+  * giftcode=all
+ * Output : 
+  * { "message": "success", "data": [ { "amount": 100000, "id": 1, "product_name": "Big Widget", "product_code": "big_widget", "price_schedule": null } ] }
